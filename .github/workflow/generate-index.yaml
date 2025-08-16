@@ -1,0 +1,42 @@
+name: Generate Enhanced Index Page
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate enhanced index.html
+        run: |
+          echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Repo Index</title><style>body{font-family:sans-serif;padding:2em;}h1{color:#333;}ul{list-style:none;padding:0;}li{margin:0.5em 0;}a{text-decoration:none;color:#007acc;}a:hover{text-decoration:underline;}</style></head><body><h1>📁 Streamlinity Public Files</h1><ul>" > index.html
+
+          for item in *; do
+            if [ -f "$item" ]; then
+              ext="${item##*.}"
+              case "$ext" in
+                pdf) icon="📄" ;;
+                md) icon="📝" ;;
+                html) icon="🌐" ;;
+                txt) icon="📃" ;;
+                *) icon="📁" ;;
+              esac
+              echo "<li>${icon} <a href=\"$item\">$item</a></li>" >> index.html
+            elif [ -d "$item" ]; then
+              echo "<li>📂 <strong>$item/</strong></li>" >> index.html
+            fi
+          done
+
+          echo "</ul></body></html>" >> index.html
+
+      - name: Commit index.html
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add index.html
+          git commit -m "Auto-generate enhanced index.html" || echo "No changes to commit"
+          git push
