@@ -1,9 +1,11 @@
+---
 name: Generate index.html
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -47,4 +49,4 @@ jobs:
           git add index.html
           git commit -m "Generated index.html using grep"
           git push
-        continue-on-error: true
+        continue-on-error: false
