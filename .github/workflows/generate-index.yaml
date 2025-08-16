@@ -2,32 +2,36 @@ name: Generate index.html
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  generate-index:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          persist-credentials: true  # 🔐 Ensures push permissions
+          persist-credentials: false  # We'll set up our own token
 
       - name: Generate index.html
         run: |
-          echo "<html><body><h1>File List</h1><ul>" > index.html
-          find . -type f ! -path "./.git/*" ! -path "./.github/*" | sed 's|^\./||' | while read file; do
-            echo "<li><a href=\"$file\">$file</a></li>" >> index.html
+          echo "<html><body><h1>Document Index</h1><ul>" > index.html
+          find . -maxdepth 1 -type f -name '*.pdf' | sort | while read file; do
+            fname=$(basename "$file")
+            echo "<li><a href='$fname'>$fname</a></li>" >> index.html
           done
           echo "</ul></body></html>" >> index.html
 
       - name: Commit and push index.html
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add index.html
-          git commit -m "Auto-generate index.html" || echo "No changes to commit"
-          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          git add index.html
+          git commit -m "Auto-generate index.html" || echo "No changes to commit"
+          git push origin HEAD:main
