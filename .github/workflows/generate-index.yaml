@@ -13,40 +13,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Debug: List all files in repo
+      - name: Debug: List all files
         run: |
-          echo "Listing all files in repo:"
+          echo "All files in repo:"
           find . -type f
 
-      - name: Debug: List matched files
+      - name: Debug: List matched files using grep
         run: |
           echo "Matched files (pdf, html, md, txt, docx):"
-          find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \)
+          find . -type f | grep -Ei '\.(pdf|html|md|txt|docx)$'
 
-      - name: Generate smart index.html
+      - name: Generate index.html using grep
         run: |
           echo "<html><head><title>Index</title></head><body>" > index.html
           echo "<h1>Available Documents</h1>" >> index.html
           echo "<p>Generated at: $(date)</p>" >> index.html
           echo "<ul>" >> index.html
 
-          find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \) | while read file; do
+          find . -type f | grep -Ei '\.(pdf|html|md|txt|docx)$' | while read file; do
             cleanfile=$(echo "$file" | sed 's|^\./||')
             echo "<li><a href=\"$cleanfile\">$cleanfile</a></li>" >> index.html
           done
 
           echo "</ul></body></html>" >> index.html
 
-      - name: Show generated index.html
-        run: |
-          echo "Generated index.html contents:"
-          cat index.html
+      - name: Show index.html
+        run: cat index.html
 
       - name: Commit and push index.html
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add index.html
-          git commit -m "Auto-generated index.html with timestamp"
+          git commit -m "Generated index.html using grep"
           git push
         continue-on-error: true
