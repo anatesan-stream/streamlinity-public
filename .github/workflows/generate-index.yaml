@@ -14,16 +14,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false  # We'll set up our own token
+          persist-credentials: false
 
-      - name: Generate index.html
+      - name: Generate smart index.html
         run: |
-          echo "<html><body><h1>Document Index</h1><ul>" > index.html
-          find . -maxdepth 1 -type f -name '*.pdf' | sort | while read file; do
+          echo "<html><head><style>
+            body { font-family: sans-serif; }
+            h2 { margin-top: 2em; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background-color: #f4f4f4; }
+          </style></head><body><h1>Document Index</h1>" > index.html
+
+          find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \) | sort | while read file; do
+            dir=$(dirname "$file")
             fname=$(basename "$file")
-            echo "<li><a href='$fname'>$fname</a></li>" >> index.html
+            size=$(du -h "$file" | cut -f1)
+            mod=$(date -r "$file" "+%Y-%m-%d %H:%M")
+            ext="${fname##*.}"
+
+            # Start a new section for each folder
+            if [[ "$dir" != "$last_dir" ]]; then
+              echo "<h2>$dir</h2><table><tr><th>File</th><th>Type</th><th>Size</th><th>Last Modified</th></tr>" >> index.html
+              last_dir="$dir"
+            fi
+
+            echo "<tr><td><a href='${file#./}'>$fname</a></td><td>$ext</td><td>$size</td><td>$mod</td></tr>" >> index.html
           done
-          echo "</ul></body></html>" >> index.html
+
+          echo "</table></body></html>" >> index.html
 
       - name: Commit and push index.html
         env:
@@ -32,6 +51,3 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-          git add index.html
-          git commit -m "Auto-generate index.html" || echo "No changes to commit"
-          git push origin HEAD:main
