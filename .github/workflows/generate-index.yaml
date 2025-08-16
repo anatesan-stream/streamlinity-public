@@ -2,8 +2,7 @@ name: Generate index.html
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -11,43 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Generate smart index.html
-        run: |
-          echo "<html><head><style>
-            body { font-family: sans-serif; }
-            h2 { margin-top: 2em; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            th { background-color: #f4f4f4; }
-          </style></head><body><h1>Document Index</h1>" > index.html
+    - name: Debug: List all files in repo
+      run: |
+        echo "Listing all files in repo:"
+        find . -type f
 
-          find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \) | sort | while read file; do
-            dir=$(dirname "$file")
-            fname=$(basename "$file")
-            size=$(du -h "$file" | cut -f1)
-            mod=$(date -r "$file" "+%Y-%m-%d %H:%M")
-            ext="${fname##*.}"
+    - name: Debug: List matched files
+      run: |
+        echo "Matched files (pdf, html, md, txt, docx):"
+        find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \)
 
-            # Start a new section for each folder
-            if [[ "$dir" != "$last_dir" ]]; then
-              echo "<h2>$dir</h2><table><tr><th>File</th><th>Type</th><th>Size</th><th>Last Modified</th></tr>" >> index.html
-              last_dir="$dir"
-            fi
+    - name: Generate smart index.html
+      run: |
+        echo "<html><head><title>Index</title></head><body>" > index.html
+        echo "<h1>Available Documents</h1>" >> index.html
+        echo "<p>Generated at: $(date)</p>" >> index.html
+        echo "<ul>" >> index.html
 
-            echo "<tr><td><a href='${file#./}'>$fname</a></td><td>$ext</td><td>$size</td><td>$mod</td></tr>" >> index.html
-          done
+        find . -type f \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.txt' -o -name '*.docx' \) | while read file; do
+          # Remove leading ./ and escape HTML
+          cleanfile=$(echo "$file" | sed 's|^\./||')
+          echo "<li><a href=\"$cleanfile\">$cleanfile</a></li>" >> index.html
+        done
 
-          echo "</table></body></html>" >> index.html
+        echo "</ul></body></html>" >> index.html
 
-      - name: Commit and push index.html
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+    - name: Show generated index.html
+      run: |
+        echo "Generated index.html contents:"
+        cat index.html
+
+    - name: Commit and push index.html
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add index.html
+        git commit -m "Auto-generated index.html with timestamp"
+        git push
+      continue-on-error: true
