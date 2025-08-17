@@ -18,7 +18,7 @@ jobs:
           <!DOCTYPE html>
           <html><head><title>Document Index</title></head><body>
           <h1>Available Documents</h1>
-          <p>Generated: $(date)</p>
+          <p>Generated: $(TZ='America/Los_Angeles' date)</p>
           <ul>
           EOF
 
