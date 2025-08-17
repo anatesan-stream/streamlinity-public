@@ -1,52 +1,43 @@
 ---
 name: Generate index.html
 
-on:
+"on":
   push:
-    branches:
-      - main
-  workflow_dispatch: {}
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Debug: List all files
+      - name: Generate index.html
         run: |
-          echo "All files in repo:"
-          find . -type f
+          cat << 'EOF' > index.html
+          <!DOCTYPE html>
+          <html><head><title>Document Index</title></head><body>
+          <h1>Available Documents</h1>
+          <p>Generated: $(date)</p>
+          <ul>
+          EOF
 
-      - name: Debug: List matched files using grep
-        run: |
-          echo "Matched files (pdf, html, md, txt, docx):"
-          find . -type f | grep -Ei '\.(pdf|html|md|txt|docx)$'
-
-      - name: Generate index.html using grep
-        run: |
-          echo "<html><head><title>Index</title></head><body>" > index.html
-          echo "<h1>Available Documents</h1>" >> index.html
-          echo "<p>Generated at: $(date)</p>" >> index.html
-          echo "<ul>" >> index.html
-
-          find . -type f | grep -Ei '\.(pdf|html|md|txt|docx)$' | while read file; do
-            cleanfile=$(echo "$file" | sed 's|^\./||')
-            echo "<li><a href=\"$cleanfile\">$cleanfile</a></li>" >> index.html
-          done
+          find ./docs -name "*.pdf" -o -name "*.html" -o -name "*.md" \
+            -o -name "*.txt" -o -name "*.docx" | \
+            sed 's|^\./||' | \
+            sort | \
+            while read file; do
+              echo "<li><a href=\"$file\">$file</a></li>"
+            done >> index.html
 
           echo "</ul></body></html>" >> index.html
 
-      - name: Show index.html
-        run: cat index.html
-
-      - name: Commit and push index.html
+      - name: Commit if changed
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add index.html
-          git commit -m "Generated index.html using grep"
-          git push
-        continue-on-error: false
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet index.html; then
+            git add index.html
+            git commit -m "Auto-update index.html"
+            git push
+          fi
