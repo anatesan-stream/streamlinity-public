@@ -22,7 +22,7 @@ jobs:
           <ul>
           EOF
 
-          find ./docs -name "*.pdf" -o -name "*.html" -o -name "*.md" \
+          find . -maxdepth 1 -name "*.pdf" -o -name "*.html" -o -name "*.md" \
             -o -name "*.txt" -o -name "*.docx" | \
             sed 's|^\./||' | \
             sort | \
