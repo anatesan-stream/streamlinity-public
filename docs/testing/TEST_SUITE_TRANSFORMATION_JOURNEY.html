@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Test Suite Transformation Journey | Claude Code Case Study</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #059669;
+            --accent: #7c3aed;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --success: #16a34a;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background: var(--gray-50);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        header .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .meta-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .meta-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: center;
+            padding: 16px 0;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            padding: 48px 0;
+        }
+
+        section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            color: var(--gray-900);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+            margin: 24px 0 12px;
+        }
+
+        h4 {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin: 16px 0 8px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--gray-700);
+        }
+
+        /* Quote blocks */
+        .callout {
+            background: var(--gray-100);
+            border-left: 4px solid var(--primary);
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.warning {
+            border-left-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        .callout.success {
+            border-left-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .callout.danger {
+            border-left-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-200);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 32px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -40px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .timeline-date {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .timeline-content {
+            color: var(--gray-700);
+        }
+
+        /* Commit cards */
+        .commit-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+
+        .commit-hash {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--primary);
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .commit-message {
+            font-weight: 600;
+            margin: 8px 0;
+        }
+
+        .commit-impact {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .impact-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .impact-badge.positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .impact-badge.negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .impact-badge.neutral {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        /* Comparison tables */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        @media (max-width: 640px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-card {
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .comparison-card.before {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .comparison-card.after {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .comparison-card h4 {
+            margin-top: 0;
+            color: var(--gray-900);
+        }
+
+        .comparison-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .comparison-card li {
+            margin: 8px 0;
+        }
+
+        /* Metrics grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .metric-delta {
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+
+        .metric-delta.positive {
+            color: var(--success);
+        }
+
+        .metric-delta.negative {
+            color: var(--danger);
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--gray-900);
+            color: #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.875rem;
+            margin: 16px 0;
+        }
+
+        code {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.875rem;
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Recommendation cards */
+        .recommendation-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+
+        .recommendation-card h4 {
+            color: var(--primary-dark);
+            margin-top: 0;
+        }
+
+        .recommendation-card ol, .recommendation-card ul {
+            margin: 12px 0 0;
+            padding-left: 24px;
+        }
+
+        .recommendation-card li {
+            margin: 8px 0;
+        }
+
+        /* Role distribution */
+        .role-distribution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        @media (max-width: 640px) {
+            .role-distribution {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .role-card {
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .role-card.human {
+            background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);
+            border: 1px solid #e879f9;
+        }
+
+        .role-card.claude {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #4ade80;
+        }
+
+        .role-card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-percentage {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 12px 0;
+        }
+
+        .role-card.human .role-percentage {
+            color: #a855f7;
+        }
+
+        .role-card.claude .role-percentage {
+            color: #22c55e;
+        }
+
+        /* Lessons list */
+        .lessons-list {
+            counter-reset: lesson;
+        }
+
+        .lesson-item {
+            counter-increment: lesson;
+            position: relative;
+            padding-left: 48px;
+            margin: 24px 0;
+        }
+
+        .lesson-item::before {
+            content: counter(lesson);
+            position: absolute;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .lesson-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .lesson-description {
+            color: var(--gray-700);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 48px 0;
+            text-align: center;
+        }
+
+        footer p {
+            color: rgba(255,255,255,0.7);
+        }
+
+        footer a {
+            color: #60a5fa;
+        }
+
+        /* Phase indicators */
+        .phase-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .phase-indicator.phase-1 { background: #fef3c7; color: #92400e; }
+        .phase-indicator.phase-2 { background: #dbeafe; color: #1e40af; }
+        .phase-indicator.phase-3 { background: #d1fae5; color: #065f46; }
+        .phase-indicator.phase-4 { background: #e0e7ff; color: #3730a3; }
+        .phase-indicator.phase-5 { background: #fce7f3; color: #9d174d; }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            background: var(--gray-100);
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>The Test Suite Transformation Journey</h1>
+            <p class="subtitle">How we turned 600+ broken tests into a reliable, maintainable testing architecture using Claude Code as a collaborator</p>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <span class="meta-value">38</span>
+                    <span class="meta-label">Days</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-value">104</span>
+                    <span class="meta-label">Commits</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-value">78%</span>
+                    <span class="meta-label">Marker Reduction</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-value">0</span>
+                    <span class="meta-label">Deploy Failures</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#the-problem">The Problem</a></li>
+            <li><a href="#the-journey">The Journey</a></li>
+            <li><a href="#key-commits">Key Commits</a></li>
+            <li><a href="#collaboration">The Honest Story</a></li>
+            <li><a href="#ai-warnings">AI Warnings</a></li>
+            <li><a href="#lessons">Lessons</a></li>
+            <li><a href="#recommendations">Recommendations</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <!-- The Problem Section -->
+            <section id="the-problem">
+                <h2>The Problem: When Tests Become a Liability</h2>
+
+                <p>It started with a simple question: <strong>"Why does every deployment fail with HTTP 401 errors?"</strong></p>
+
+                <p>The answer led us down a rabbit hole. Our test suite had become a liability, not an asset. Here's what we found:</p>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">59%</div>
+                        <div class="metric-label">Tests Unmarked</div>
+                        <div class="metric-delta negative">359 of 608 tests</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">38</div>
+                        <div class="metric-label">Failing Tests</div>
+                        <div class="metric-delta negative">Hidden in "graveyard"</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">27</div>
+                        <div class="metric-label">Pytest Markers</div>
+                        <div class="metric-delta negative">21 were deprecated</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">5</div>
+                        <div class="metric-label">Environment Configs</div>
+                        <div class="metric-delta negative">Nobody understood them</div>
+                    </div>
+                </div>
+
+                <div class="callout danger">
+                    <h4>The Root Cause</h4>
+                    <p>In June 2025, we pivoted our architecture from RAG (13 modules, complex chunking) to a single intelligent agent. Brilliant for business logic. But we shipped without migrating the tests. Six months of technical debt accumulated.</p>
+                </div>
+
+                <h3>The Anti-Patterns We Discovered</h3>
+
+                <div class="comparison">
+                    <div class="comparison-card before">
+                        <h4>The "Graveyard" Pattern</h4>
+                        <p>When tests failed after the RAG-to-Agent migration:</p>
+                        <pre style="background: #fef2f2; color: var(--gray-900);">mkdir tests/e2e/to-be-investigated/
+mv failing_test.py to-be-investigated/
+# "We'll fix it later"</pre>
+                        <p><strong>38 tests</strong> hidden away. Never investigated.</p>
+                    </div>
+                    <div class="comparison-card after">
+                        <h4>The Better Approach</h4>
+                        <p>What we should have done:</p>
+                        <pre style="background: #f0fdf4; color: var(--gray-900);">@pytest.mark.skip(
+    reason="Issue #123: Fix by Q2"
+)
+def test_failing():
+    pass</pre>
+                        <p>Triage immediately: fix, consolidate, or delete.</p>
+                    </div>
+                </div>
+
+                <h3>The 27-Marker Disaster</h3>
+                <p>Our pytest.ini told the whole story:</p>
+
+                <pre># Core tiers (3 markers)
+unit, integration, e2e
+
+# Deprecated but still used (4 markers)
+mocked, integration_mocked, integration_real, contract
+
+# Service-specific (4 markers)
+aws, llm, webhooks, multiple_external
+
+# Environment-specific (3 markers)
+local_dev_only, local_remote_only, production_only
+
+# Speed categories (5 markers)
+fast, slow, expensive, performance, load
+
+# Test suites (3 markers)
+smoke, regression, sanity
+
+# Unregistered (5 markers)
+concurrency, deployment, auth_optional, mock_auth_only, requires_aws</pre>
+
+                <div class="callout warning">
+                    <p><strong>The Warning Signs:</strong> If you see marker proliferation (>10 markers), it's often a symptom of deeper architectural confusion. Each edge case got a new marker instead of fixing the underlying problem.</p>
+                </div>
+            </section>
+
+            <!-- The Journey Section -->
+            <section id="the-journey">
+                <h2>The Journey: 38 Days, 104 Commits</h2>
+
+                <p>We didn't fix everything overnight. The transformation happened in phases, each building on the last. Here's the honest timeline:</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <span class="phase-indicator phase-1">Phase 1</span>
+                        <div class="timeline-date">November 14, 2025</div>
+                        <div class="timeline-title">Diagnosis: Facing the Truth</div>
+                        <div class="timeline-content">
+                            <p>We ran the audit. The numbers were worse than we thought. 59% of tests unmarked. 38 failing tests hiding in a graveyard directory. 10 async tests silently skipped because <code>asyncio</code> wasn't in the expected markers.</p>
+                            <p>This was the day we stopped pretending and started planning.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <span class="phase-indicator phase-2">Phase 2</span>
+                        <div class="timeline-date">November 14-15, 2025</div>
+                        <div class="timeline-title">Marker Streamlining</div>
+                        <div class="timeline-content">
+                            <p>First wins: Added <code>asyncio</code> to expected markers (recovered 10 tests). Implemented auto-marker system based on directories. Removed 74 redundant marker decorators across 29 files.</p>
+                            <p><strong>Key insight:</strong> Directory structure should be the single source of truth for test categorization.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <span class="phase-indicator phase-3">Phase 3</span>
+                        <div class="timeline-date">November 15, 2025</div>
+                        <div class="timeline-title">Test Archaeology</div>
+                        <div class="timeline-content">
+                            <p>The hard work: Analyzing 38 failing tests. Some were testing deprecated SQS features (deleted). Some were duplicates (consolidated 46 webhook tests to 19). Some needed actual fixes.</p>
+                            <p><strong>Result:</strong> Zero failing tests. But we didn't just hide them this time.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <span class="phase-indicator phase-4">Phase 4</span>
+                        <div class="timeline-date">December 18, 2025</div>
+                        <div class="timeline-title">The 2-Dimension Breakthrough</div>
+                        <div class="timeline-content">
+                            <p>The paradigm shift: Replace 5 confusing environments (WEB_WEB, LOCAL_LOCAL, etc.) with 2 simple dimensions:</p>
+                            <ul>
+                                <li><strong>LOCATION:</strong> laptop or aws</li>
+                                <li><strong>USE_REAL_SERVICES:</strong> true or false</li>
+                            </ul>
+                            <p>This was the architecture decision that made everything else sustainable.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <span class="phase-indicator phase-5">Phase 5</span>
+                        <div class="timeline-date">December 19-22, 2025</div>
+                        <div class="timeline-title">Finalization & Documentation</div>
+                        <div class="timeline-content">
+                            <p>Making tests environment-adaptive. Adding 42 smoke tests (3 seconds, $0 cost). Fixing a critical marker mismatch that was silently skipping 266 tests during deployment. Writing 870 lines of documentation.</p>
+                            <p><strong>Final result:</strong> Zero deployment authentication failures.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Commits Section -->
+            <section id="key-commits">
+                <h2>Key Commits: The Story in Code</h2>
+
+                <p>These are the commits that made the biggest difference. Each one represents a distinct lesson learned.</p>
+
+                <div class="commit-card">
+                    <span class="commit-hash">4e79025</span>
+                    <div class="commit-message">Streamline pytest markers - eliminate redundant markers and silent test skipping</div>
+                    <p>The first major fix. Added <code>asyncio</code> to expected markers, recovering 10 tests that had been silently skipped.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">+10 tests recovered</span>
+                        <span class="impact-badge neutral">Silent skipping prevented</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">7becfbc</span>
+                    <div class="commit-message">Streamline pytest markers and implement auto-marker system</div>
+                    <p>The architectural win. Tests in <code>tests/unit/</code> automatically get <code>@pytest.mark.unit</code>. Directory = marker. Impossible to forget.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">59% unmarked &rarr; 0%</span>
+                        <span class="impact-badge positive">Human error eliminated</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">5b4735c</span>
+                    <div class="commit-message">Remove all SQS-related tests (deprecated capability)</div>
+                    <p>Sometimes the right fix is deletion. SQS was deprecated months ago, but the tests remained, failing and confusing everyone.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">-10 failures</span>
+                        <span class="impact-badge positive">-439 lines of dead code</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">30be133</span>
+                    <div class="commit-message">Consolidate webhook tests from 46 to 19 tests</div>
+                    <p>More tests ≠ better tests. We consolidated duplicate tests without losing coverage. The 27 deleted tests were testing implementation details, not behavior.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">46 &rarr; 19 tests</span>
+                        <span class="impact-badge positive">Zero coverage loss</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">7043824</span>
+                    <div class="commit-message">Simplify test architecture with 5-tier execution strategy</div>
+                    <p>The big refactor. Flattened directories from 4+ levels to 2. Introduced 42 smoke tests. Replaced 5 environments with 2 dimensions.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">5 envs &rarr; 2 dimensions</span>
+                        <span class="impact-badge positive">42 smoke tests added</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">5e29bb2</span>
+                    <div class="commit-message">Fix pytest marker mismatch in deployment script (recovers 266 tests)</div>
+                    <p>A critical bug: deployment scripts were using old marker syntax (<code>integration_mocked</code>) that didn't match new markers. 266 tests were silently skipped during every deployment.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">+266 tests recovered</span>
+                        <span class="impact-badge negative">Bug existed for months</span>
+                    </div>
+                </div>
+
+                <div class="commit-card">
+                    <span class="commit-hash">b4022db</span>
+                    <div class="commit-message">Simplify E2E test architecture - Phase 5</div>
+                    <p>Final cleanup. Tests now adapt to their environment. No more hardcoded authentication assumptions. E2E test buckets with cost control.</p>
+                    <div class="commit-impact">
+                        <span class="impact-badge positive">Environment-adaptive</span>
+                        <span class="impact-badge positive">Zero auth failures</span>
+                    </div>
+                </div>
+
+                <div class="callout success">
+                    <h4>The Pattern in These Commits</h4>
+                    <p>Notice how each commit is focused, measurable, and incremental. We didn't try to fix everything at once. Each change was validated before moving to the next. This is the cadence that worked: small wins, verified, compounding.</p>
+                </div>
+            </section>
+
+            <!-- The Honest Story Section -->
+            <section id="collaboration">
+                <h2>The Uncomfortable Truth: Claude Code Created the Mess AND Cleaned It Up</h2>
+
+                <div class="callout danger">
+                    <h4>Let's Be Honest</h4>
+                    <p>Claude Code didn't just clean up this mess - <strong>it helped create it</strong>. The same tool that reduced 27 markers to 6 also helped accumulate those 27 markers in the first place.</p>
+                    <p><strong>What changed wasn't the tool. What changed was the quality of human direction.</strong></p>
+                </div>
+
+                <h3>How the Mess Was Created: Joint Responsibility</h3>
+
+                <p>Between June and November 2025, our test suite degraded from manageable to catastrophic. This wasn't Claude Code's fault alone, and it wasn't the human's fault alone. It was a collaboration - the wrong kind.</p>
+
+                <div class="comparison">
+                    <div class="comparison-card before">
+                        <h4>Human Contribution to the Mess</h4>
+                        <ul>
+                            <li><strong>Vague direction</strong>: "Write tests and run tests" without defining architecture or strategy</li>
+                            <li><strong>Uncritical acceptance</strong>: Approved marker additions without challenging why</li>
+                            <li><strong>No periodic review</strong>: Let complexity accumulate for 6 months without auditing</li>
+                            <li><strong>Experimental debt</strong>: Claude Code on Web experiment led to <code>WEB_WEB</code> config that was never cleaned up</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card before">
+                        <h4>Claude Code Contribution to the Mess</h4>
+                        <ul>
+                            <li><strong>Unchallenged compliance</strong>: Generated tests without questioning architecture or strategy</li>
+                            <li><strong>Premature victory</strong>: "All tests passing!" while 24 tests were silently skipped</li>
+                            <li><strong>Edge case accommodation</strong>: Each failure got a new marker instead of root cause analysis</li>
+                            <li><strong>No strategic pushback</strong>: Never said "hey, 27 markers is getting out of hand"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>The Productivity Paradox</h3>
+
+                <div class="callout warning">
+                    <h4>AI Removes Healthy Friction</h4>
+                    <ul>
+                        <li><strong>Without AI</strong>: Adding a 5th environment = 4 hours of work. Developer thinks twice.</li>
+                        <li><strong>With AI</strong>: Adding a 5th environment = 10 minutes. Less resistance to questionable decisions.</li>
+                    </ul>
+                    <p>AI makes both good decisions AND bad decisions frictionless. That's powerful when direction is good, and dangerous when direction is vague.</p>
+                </div>
+
+                <h3>The Mess Accumulated Gradually</h3>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">June 2025</div>
+                        <div class="timeline-title">RAG to Agent Migration</div>
+                        <div class="timeline-content">
+                            <p><strong>Human decision:</strong> "Ship without full test migration - too much work"</p>
+                            <p><strong>Claude Code enabling:</strong> Made partial migration seem sufficient, declared victory</p>
+                            <p><strong>Result:</strong> Tests testing old architecture with new code</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">June - August</div>
+                        <div class="timeline-title">Marker Proliferation</div>
+                        <div class="timeline-content">
+                            <p><strong>Pattern:</strong> Test fails in some environment. "Add a marker for this edge case."</p>
+                            <p><strong>Claude Code's role:</strong> Generated markers efficiently, no architectural pushback</p>
+                            <p><strong>Result:</strong> 27 markers, nobody remembers what half of them mean</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">September</div>
+                        <div class="timeline-title">The WEB_WEB Experiment</div>
+                        <div class="timeline-content">
+                            <p><strong>Need:</strong> Claude Code on Web has strict sandbox requirements</p>
+                            <p><strong>Solution:</strong> Create <code>WEB_WEB</code> environment configuration</p>
+                            <p><strong>Human failure:</strong> Never cleaned up after experiment ended - temporary became permanent</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">October</div>
+                        <div class="timeline-title">The Graveyard Pattern</div>
+                        <div class="timeline-content">
+                            <p><strong>Human:</strong> "These 38 tests are failing. Fix them."</p>
+                            <p><strong>Claude Code:</strong> "I'll move them to <code>to-be-investigated/</code>"</p>
+                            <p><strong>Human:</strong> "Great, we'll fix them later"</p>
+                            <p><strong>Later:</strong> Never came</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">November 14</div>
+                        <div class="timeline-title">Crisis Point</div>
+                        <div class="timeline-content">
+                            <p>Every deployment failing with auth errors. 59% of tests unmarked. 27 markers. 5 environments. Nobody understands the system.</p>
+                            <p><strong>The wake-up call: Something had to change.</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Earlier Claude Versions Made It Worse</h3>
+
+                <div class="callout warning">
+                    <h4>Model Version Matters</h4>
+                    <p><strong>Earlier versions (pre-Opus 4.5):</strong></p>
+                    <ul>
+                        <li>More prone to declaring victory early: "All tests passing!" (24 actually skipped)</li>
+                        <li>Less likely to flag architectural issues</li>
+                        <li>More optimistic, glossed over problems</li>
+                    </ul>
+                    <p><strong>Opus 4.5 (current):</strong></p>
+                    <ul>
+                        <li>More balanced reporting</li>
+                        <li>Better pattern recognition</li>
+                        <li>But still won't proactively say "Your architecture is getting out of hand"</li>
+                    </ul>
+                    <p>Human skepticism is required regardless of model version.</p>
+                </div>
+
+                <h3>What Changed in the Cleanup</h3>
+
+                <p>The transformation took 38 days because the collaboration model changed fundamentally:</p>
+
+                <div class="comparison">
+                    <div class="comparison-card before">
+                        <h4>Mess Creation Mode</h4>
+                        <ul>
+                            <li><strong>Vague objectives</strong>: "Make tests work"</li>
+                            <li><strong>Tactical problem-solving</strong>: Each issue gets a new marker</li>
+                            <li><strong>Uncritical acceptance</strong>: Claude proposes, human approves</li>
+                            <li><strong>No periodic review</strong>: Debt accumulates invisibly</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card after">
+                        <h4>Cleanup Mode</h4>
+                        <ul>
+                            <li><strong>Clear objectives</strong>: "Reduce 27 markers to 6" (measurable)</li>
+                            <li><strong>Strategic constraints</strong>: "Max 2 directory levels, 2-dimension model"</li>
+                            <li><strong>Demand justification</strong>: "Why keep this marker? Show me data."</li>
+                            <li><strong>Incremental validation</strong>: Test after every change, review before proceeding</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="callout success">
+                    <h4>The Switching Factor</h4>
+                    <p><strong>Same AI. Different outcomes.</strong> What determined which?</p>
+                    <p>The quality and specificity of human direction:</p>
+                    <ul>
+                        <li><strong>Before:</strong> "Write tests" → AI generates exhaustively without strategy</li>
+                        <li><strong>After:</strong> "Reduce 27 markers to 6, justify each with data" → AI executes within constraints</li>
+                    </ul>
+                    <p>Claude Code is a force multiplier. <strong>Good direction × AI = 10x productivity. Vague direction × AI = 10x mess accumulation.</strong></p>
+                </div>
+
+                <h3>Time Savings (Cleanup Phase Only)</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Human Time</th>
+                            <th>With Claude Code</th>
+                            <th>Savings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pattern recognition (find all deprecated markers)</td>
+                            <td>4-6 hours</td>
+                            <td>30 seconds</td>
+                            <td>99.9%</td>
+                        </tr>
+                        <tr>
+                            <td>Mechanical refactoring (remove 74 markers)</td>
+                            <td>2-3 hours</td>
+                            <td>10 minutes</td>
+                            <td>92%</td>
+                        </tr>
+                        <tr>
+                            <td>Documentation generation</td>
+                            <td>8-12 hours</td>
+                            <td>45 minutes</td>
+                            <td>93%</td>
+                        </tr>
+                        <tr>
+                            <td>Test archaeology (categorize 38 failing tests)</td>
+                            <td>6-8 hours</td>
+                            <td>2 hours</td>
+                            <td>75%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="callout">
+                    <h4>Important Context on These Numbers</h4>
+                    <p>These time savings represent the <strong>cleanup phase</strong>, not the entire story. The full accounting:</p>
+                    <ul>
+                        <li><strong>June-November (mess creation):</strong> Weeks of time "saved" by deferring hard decisions</li>
+                        <li><strong>November (crisis):</strong> Days lost to deployment failures, investigation</li>
+                        <li><strong>November-December (cleanup):</strong> 38 days to eliminate 6 months of debt</li>
+                    </ul>
+                    <p><strong>Net result:</strong> Probably neutral on time. But massive improvement in system quality and developer experience.</p>
+                </div>
+
+                <h3>What Actually Worked</h3>
+
+                <div class="role-distribution">
+                    <div class="role-card human">
+                        <h4>Human Direction (Required)</h4>
+                        <ul>
+                            <li><strong>Clear objectives</strong>: "Reduce 27 markers to 6" (measurable)</li>
+                            <li><strong>Strategic constraints</strong>: "2-dimension model, max 2 directory levels"</li>
+                            <li><strong>Demand justification</strong>: "Why keep this marker? Show data."</li>
+                            <li><strong>Skepticism</strong>: "Is this really simpler, or just different?"</li>
+                            <li><strong>Insistence on detail</strong>: Not accepting superficial fixes</li>
+                        </ul>
+                    </div>
+                    <div class="role-card claude">
+                        <h4>Claude Code Execution (Enabled)</h4>
+                        <ul>
+                            <li><strong>Pattern recognition</strong>: Found 74 marker instances in seconds</li>
+                            <li><strong>Mechanical refactoring</strong>: 29 files, zero errors, 10 minutes</li>
+                            <li><strong>Data analysis</strong>: Categorized 38 failing tests</li>
+                            <li><strong>Documentation</strong>: Generated 870 lines (human edited)</li>
+                            <li><strong>Validation</strong>: Tested after every change</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Collaboration Warnings Section -->
+            <section id="ai-warnings">
+                <h2>Critical Warnings for Tech Leaders Using AI Tools</h2>
+
+                <div class="callout danger">
+                    <p><strong>This retrospective is as much a warning as a success story.</strong></p>
+                    <p>Claude Code can accelerate development OR accelerate technical debt accumulation. The determining factor is human strategic direction and skepticism.</p>
+                </div>
+
+                <div class="lessons-list">
+                    <div class="lesson-item">
+                        <div class="lesson-title">AI doesn't question or challenge - you have to</div>
+                        <div class="lesson-description">
+                            <p>Claude Code will happily add a 27th marker if you ask. It won't say "hey, this is getting complicated" or "should we reconsider our approach?" That's your job.</p>
+                            <p><strong>Mitigation:</strong> Establish architectural constraints BEFORE generating. Create a <code>TESTING_PHILOSOPHY.md</code> that limits markers, environments, and complexity.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Earlier AI versions declared victory prematurely</div>
+                        <div class="lesson-description">
+                            <p>"All tests passing!" sounds great until you realize 24 tests were silently skipped. Pre-Opus versions were especially prone to optimistic reporting.</p>
+                            <p><strong>Mitigation:</strong> Always verify. Run <code>pytest --collect-only | grep SKIP</code>. Don't trust "everything works" without checking.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Friction removal can be dangerous</div>
+                        <div class="lesson-description">
+                            <p>Without AI, adding a 5th environment takes 4 hours - you think twice. With AI, it takes 10 minutes - you just do it. The natural friction that prevents bad decisions is removed.</p>
+                            <p><strong>Mitigation:</strong> Require approval for architectural changes. Quarterly complexity audits. Red flags: markers > 10, environments > 3, nesting > 3 levels.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Experimental code becomes permanent</div>
+                        <div class="lesson-description">
+                            <p>The <code>WEB_WEB</code> configuration was created for a few days of Claude Code on Web experimentation. It was never cleaned up and contributed to the 5-environment complexity.</p>
+                            <p><strong>Mitigation:</strong> Track experiments. Set expiration dates. Clean up when experiments end.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Volume is not value</div>
+                        <div class="lesson-description">
+                            <p>With AI, generating 600 tests is easy. But 300 strategic tests are better than 600 scattered tests. We had 46 webhook tests; 19 provide the same coverage.</p>
+                            <p><strong>Mitigation:</strong> Celebrate simplification as much as generation. Track complexity metrics, not just test counts.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Junior + AI requires senior oversight</div>
+                        <div class="lesson-description">
+                            <p>Junior developers lack architectural intuition to constrain AI effectively. Result: tactical solutions proliferate without strategic coherence.</p>
+                            <p><strong>Mitigation:</strong> Senior review for architectural changes. Guardrails in project configuration. Pair programming on complex features.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <h4>The Bottom Line for Tech Managers</h4>
+                    <p>AI tools like Claude Code are powerful force multipliers. But:</p>
+                    <ul>
+                        <li>They amplify the quality of human direction - good AND bad</li>
+                        <li>Good constraints × AI = Massive productivity gains</li>
+                        <li>Vague direction × AI = Massive technical debt accumulation</li>
+                        <li>It's the same multiplier - the input determines the output</li>
+                    </ul>
+                    <p><strong>Invest in:</strong> Strategic direction, architectural guardrails, periodic reviews, senior oversight.</p>
+                    <p><strong>Not just:</strong> AI subscriptions and tool training.</p>
+                </div>
+            </section>
+
+            <!-- Lessons Learned Section -->
+            <section id="lessons">
+                <h2>Lessons Learned: What We'd Tell Our Past Selves</h2>
+
+                <div class="lessons-list">
+                    <div class="lesson-item">
+                        <div class="lesson-title">Test suite degradation is invisible until it's catastrophic</div>
+                        <div class="lesson-description">
+                            <p>Each small compromise seems reasonable. "Let's skip this test in production for now." "Let's create a new marker for this edge case." "Let's move these failing tests to investigate later."</p>
+                            <p>Six months later, you wake up to 27 markers and 59% unmarked tests. The warning signs are there if you look: marker proliferation, graveyard directories, "skip in production" comments. Run a quarterly audit before you need a 38-day transformation.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Architectural pivots require test migration</div>
+                        <div class="lesson-description">
+                            <p>When we pivoted from RAG to Agent architecture, we shipped brilliant new business logic with partially-migrated tests. The tests kept testing old patterns. Markers proliferated to handle "special cases."</p>
+                            <p><strong>Budget 20-30% of refactoring effort for test migration.</strong> Make test migration part of your definition of done. Don't ship until tests reflect the new architecture.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">More tests ≠ better tests</div>
+                        <div class="lesson-description">
+                            <p>We had 46 webhook tests. We consolidated to 19. Coverage: identical (actually improved). The 27 deleted tests were testing implementation details, duplicating other tests, or testing deprecated features.</p>
+                            <p>100 scattered, duplicative tests are harder to maintain and less effective than 30 well-organized, comprehensive tests. Quality beats quantity.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Environment complexity is a smell</div>
+                        <div class="lesson-description">
+                            <p>5 environments (WEB_WEB, LOCAL_LOCAL, LOCAL_REMOTE, REMOTE_REMOTE, CI_CD) with different marker expectations and configurations. Nobody understood them.</p>
+                            <p>2 dimensions (LOCATION × USE_REAL_SERVICES) that compose naturally. Scales to new scenarios without new configuration. If you can't explain your test environments in 2 minutes, they're too complex.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Auto-apply markers based on directory</div>
+                        <div class="lesson-description">
+                            <p>Old system: Developers manually add <code>@pytest.mark.unit</code>. Human error. 59% of tests unmarked.</p>
+                            <p>New system: <code>tests/unit/conftest.py</code> auto-applies the marker. Directory is single source of truth. Zero chance of forgetting. Impossible to miscategorize.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Failing tests are better than skipped tests</div>
+                        <div class="lesson-description">
+                            <p>We had 24 skipped tests. 19 of them were skipped because of a configuration error (asyncio not in expected_markers). These were legitimate tests that weren't running.</p>
+                            <p>Skipped tests hide problems. Failing tests surface them. If you must skip, require a tracked issue and scheduled fix date.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Claude Code excels at mechanical refactoring</div>
+                        <div class="lesson-description">
+                            <p>Pattern recognition across hundreds of files? 30 seconds vs hours. Removing 74 markers from 29 files? 10 minutes, zero errors. Documentation generation? 45 minutes vs 8-12 hours.</p>
+                            <p>But strategic decisions, risk assessment, domain knowledge, and quality validation? Still human. Claude Code is a force multiplier, not a replacement.</p>
+                        </div>
+                    </div>
+
+                    <div class="lesson-item">
+                        <div class="lesson-title">Comprehensive documentation is worth it</div>
+                        <div class="lesson-description">
+                            <p>We generated 870 lines of testing architecture documentation. Diagrams, examples, migration guides, troubleshooting sections.</p>
+                            <p>3-4 hours of documentation work saves 10+ hours per new developer onboarding. Onboarding went from 2 weeks to 30 minutes.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recommendations Section -->
+            <section id="recommendations">
+                <h2>Recommendations: If You're Facing Similar Challenges</h2>
+
+                <h3>For Tech Managers Evaluating This Approach</h3>
+
+                <div class="recommendation-card">
+                    <h4>Go/No-Go Checklist</h4>
+                    <p>This approach makes sense if:</p>
+                    <ul>
+                        <li>Test suite > 300 tests (scale justifies the effort)</li>
+                        <li>Multiple anti-patterns present (markers, directories, skipped tests)</li>
+                        <li>Recent architectural change without test migration</li>
+                        <li>Deployment failures due to test configuration</li>
+                        <li>Senior developer available for strategic direction</li>
+                    </ul>
+                    <p>It may not make sense if:</p>
+                    <ul>
+                        <li>Small test suite (< 100 tests) - manual might be faster</li>
+                        <li>Clean existing architecture - low ROI</li>
+                        <li>Junior team without senior guidance - risky</li>
+                    </ul>
+                </div>
+
+                <h3>For Teams Starting a Similar Transformation</h3>
+
+                <div class="comparison">
+                    <div class="comparison-card before">
+                        <h4>Week 1: Diagnosis</h4>
+                        <ul>
+                            <li>Run the health audit (unmarked tests, markers, skipped, failing)</li>
+                            <li>Document baseline metrics</li>
+                            <li>Identify graveyard patterns</li>
+                            <li>Define measurable success criteria</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card after">
+                        <h4>Weeks 2-4: Execution</h4>
+                        <ul>
+                            <li>Implement auto-markers (directory-based)</li>
+                            <li>Triage failing tests (fix, consolidate, delete)</li>
+                            <li>Simplify environment configuration</li>
+                            <li>Flatten directory structure</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Sustainability Playbook</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Frequency</th>
+                            <th>Action</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monthly</td>
+                            <td>Run health audit (skipped tests, marker count)</td>
+                            <td>1 hour</td>
+                        </tr>
+                        <tr>
+                            <td>Quarterly</td>
+                            <td>Marker audit, documentation review</td>
+                            <td>4 hours</td>
+                        </tr>
+                        <tr>
+                            <td>Annually</td>
+                            <td>Full architecture review</td>
+                            <td>1 week</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="callout success">
+                    <h4>The 5-Tier Model</h4>
+                    <p>This model is broadly applicable to any web service with external dependencies:</p>
+                    <ul>
+                        <li><strong>Tier 1: Unit</strong> - 3 min, $0 - Every commit</li>
+                        <li><strong>Tier 2: Integration (Mocked)</strong> - 15 sec, $0 - Pre-commit</li>
+                        <li><strong>Tier 3: Smoke</strong> - 3 sec, $0 - Quick validation</li>
+                        <li><strong>Tier 4: Integration (External)</strong> - 10 min, $1-2 - Pre-deployment</li>
+                        <li><strong>Tier 5: E2E</strong> - 30 min, $2-5 - Post-deployment</li>
+                    </ul>
+                    <p><strong>The value:</strong> 99% of development uses Tiers 1-3 (free, fast). Tiers 4-5 provide controlled, costly validation when you need it.</p>
+                </div>
+            </section>
+
+            <!-- Final Outcomes Section -->
+            <section>
+                <h2>The Outcomes: Was It Worth It?</h2>
+
+                <div class="comparison">
+                    <div class="comparison-card before">
+                        <h4>Before (November 14)</h4>
+                        <ul>
+                            <li>608 tests, 359 unmarked (59%)</li>
+                            <li>38 failing tests (hidden in graveyard)</li>
+                            <li>27 pytest markers</li>
+                            <li>5 environment configurations</li>
+                            <li>4+ directory levels</li>
+                            <li>Every deployment failed</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card after">
+                        <h4>After (December 22)</h4>
+                        <ul>
+                            <li>~530 tests, 100% categorized</li>
+                            <li>0 failing tests</li>
+                            <li>6 core markers (78% reduction)</li>
+                            <li>2 composable dimensions</li>
+                            <li>2 directory levels</li>
+                            <li>Zero deployment failures</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>The Real ROI</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">&lt; 5 min</div>
+                        <div class="metric-label">Fast Feedback (Tiers 1-3)</div>
+                        <div class="metric-delta positive">$0 cost</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">30 min</div>
+                        <div class="metric-label">Onboarding Time</div>
+                        <div class="metric-delta positive">Was 2 weeks</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Zero</div>
+                        <div class="metric-label">Auth Failures</div>
+                        <div class="metric-delta positive">Was every deploy</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">83%</div>
+                        <div class="metric-label">Time Saved</div>
+                        <div class="metric-delta positive">Via Claude Code</div>
+                    </div>
+                </div>
+
+                <div class="callout success">
+                    <p><strong>The bottom line:</strong> Developers spend less time fighting test infrastructure and more time shipping features. The test suite went from liability to asset. That's the ROI that matters.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p><strong>Test Suite Transformation Case Study</strong></p>
+            <p>November 14 - December 22, 2025</p>
+            <p style="margin-top: 24px; font-size: 0.875rem; opacity: 0.7;">
+                This retrospective was created with Claude Code as a collaborator.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
